@@ -1,4 +1,4 @@
-module dynsecgo
+module github.com/qazf88/dynsecgo
 
 go 1.18
 
