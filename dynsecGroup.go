@@ -16,7 +16,7 @@ func (ds *DynSec) ExistGroup(groupName string) (bool, error) {
 		return false, err
 	}
 
-	result, err := publishCommand(ds.mc, jsonRequest)
+	result, err := ds.sendCommand(jsonRequest)
 	if err != nil {
 		return false, err
 	}
@@ -27,9 +27,9 @@ func (ds *DynSec) ExistGroup(groupName string) (bool, error) {
 		return false, err
 	}
 
-	if newResponse.Responses[0].Error == "Group already exists" {
+	if *newResponse.Responses[0].Error == "Group already exists" {
 		return true, nil
-	} else if newResponse.Responses[0].Error == "Group not found" {
+	} else if *newResponse.Responses[0].Error == "Group not found" {
 		return false, nil
 	}
 

@@ -1,105 +1,148 @@
 package dynsecgo
 
 import (
+	"fmt"
+	"math/rand"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type DynSec struct {
-	mc mqtt.Client
+	mc          mqtt.Client
+	command     *dynSecCommand
+	always      bool
+	timeOut     time.Duration //Millisecond
+	subResponse chan []byte
 }
 
-type acl struct {
-	Acltype string `json:"acltype"`
-	Topic   string `json:"topic"`
-	Allow   bool   `json:"allow"`
+type dynSecCommand struct {
 }
 
-type group struct {
-	Groupname string `json:"groupname"`
-	Priority  int    `json:"priority"`
+func NewDynSecCommand() *dynSecCommand {
+	return &dynSecCommand{}
 }
 
-type role struct {
-	Rolename string `json:"rolename"`
-	Priority int    `json:"priority"`
+// SetTimeout Millisecond
+func (ds *DynSec) SetTimeout(timeout time.Duration) {
+	ds.timeOut = timeout
 }
 
-type commands struct {
-	Commands interface{} `json:"commands"`
-}
+func NewDynSecInternalClient(user, password, clientID, host string, port int, runAlways bool) *DynSec {
 
-type response struct {
-	Responses []result `json:"responses"`
-}
-type result struct {
-	Error string `json:"error"`
-}
+	if len(clientID) < 1 {
+		clientID = randString(8)
+	}
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(fmt.Sprintf("mqtt://%s:%d", host, port))
+	opts.SetClientID(clientID)
+	opts.ConnectTimeout = 500 * time.Millisecond
+	opts.WriteTimeout = 500 * time.Millisecond
 
-type command struct {
-	Command         string  `json:"command"`
-	Username        string  `json:"username,omitempty"`
-	Password        string  `json:"password,omitempty"`
-	Clientid        string  `json:"clientid,omitempty"`
-	Roles           []role  `json:"roles,omitempty"`
-	Role            string  `json:"role,omitempty"`
-	Groups          []group `json:"groups,omitempty"`
-	Group           string  `json:"group,omitempty"`
-	Clients         string  `json:"clients,omitempty"`
-	Rolename        string  `json:"rolename,omitempty"`
-	Groupname       string  `json:"groupname,omitempty"`
-	Textname        string  `json:"textname,omitempty"`
-	Priority        int     `json:"priority,omitempty"`
-	Textdescription string  `json:"textdescription,omitempty"`
-	Verbose         bool    `json:"verbose,omitempty"`
-	Acls            []acl   `json:"acls,omitempty"`
-}
+	if len(user) > 0 {
+		opts.SetUsername(user)
+	}
 
-func NewDinSec(mc mqtt.Client) *DynSec {
+	if len(password) > 0 {
+		opts.SetPassword(password)
+	}
+
+	if runAlways {
+		opts.CleanSession = false
+
+	}
+
+	mc := mqtt.NewClient(opts)
+
 	return &DynSec{
-		mc: mc,
+		mc:          mc,
+		command:     NewDynSecCommand(),
+		always:      runAlways,
+		timeOut:     500,
+		subResponse: make(chan []byte),
 	}
 }
 
 const (
+	charset = "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	dinSecPubTopic = "$CONTROL/dynamic-security/v1"
 	dinSecSubTopic = "$CONTROL/dynamic-security/v1/response/#"
 )
 
+// subscribe
+func (ds *DynSec) subscribe() error {
+
+	if token := ds.mc.Subscribe(dinSecSubTopic, 0, func(client mqtt.Client, msg mqtt.Message) {
+		ds.subResponse <- msg.Payload()
+	}); token.Wait() && token.Error() != nil {
+
+		return token.Error()
+	}
+	return nil
+}
+
 // publishCommand
-func publishCommand(mc mqtt.Client, request []byte) ([]byte, error) {
+func (ds *DynSec) sendCommand(request []byte) ([]byte, error) {
 
 	var payload []byte
-	ok := make(chan bool)
+	flagTimeout := false
 
-	if token := mc.Connect(); token.Wait() && token.Error() != nil {
+	if !ds.mc.IsConnected() {
+		if token := ds.mc.Connect(); token.Wait() && token.Error() != nil {
+			return nil, token.Error()
+		}
 
-		return nil, token.Error()
-	}
-
-	if token := mc.Subscribe(dinSecSubTopic, 0, func(client mqtt.Client, msg mqtt.Message) { payload = msg.Payload() }); token.Wait() && token.Error() != nil {
-
-		return nil, token.Error()
-	}
-
-	if token := mc.Publish(dinSecPubTopic, 0, false, request); token.Wait() && token.Error() != nil {
-		return nil, token.Error()
-	}
-loop:
-	for {
-		select {
-		case <-time.After(1500 * time.Millisecond):
-			break loop
-		case <-ok:
-			break loop
+		if err := ds.subscribe(); err != nil {
+			return nil, err
 		}
 	}
 
-	if token := mc.Unsubscribe(dinSecSubTopic); token.Wait() && token.Error() != nil {
+	go func() {
+		if token := ds.mc.Publish(dinSecPubTopic, 0, false, request); token.Wait() && token.Error() != nil {
+			fmt.Println(token.Error())
+			return
+		}
+	}()
 
-		return nil, token.Error()
+loop2:
+	for {
+		select {
+		case <-time.After(ds.timeOut * time.Millisecond):
+			flagTimeout = true
+			break loop2
+		case payload = <-ds.subResponse:
+			break loop2
+		}
 	}
-	mc.Disconnect(100)
+
+	if !ds.always {
+		if token := ds.mc.Unsubscribe(dinSecSubTopic); token.Wait() && token.Error() != nil {
+			return nil, token.Error()
+		}
+		ds.mc.Disconnect(0)
+	}
+
+	if flagTimeout {
+		return nil, fmt.Errorf("timeout wait response")
+	}
+
 	return payload, nil
+}
+
+// randString
+func randString(length int) string {
+
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand().Intn(len(charset))]
+	}
+
+	return string(b)
+}
+
+// seededRand
+func seededRand() *rand.Rand {
+	return rand.New(
+		rand.NewSource(time.Now().UnixNano()))
 }
