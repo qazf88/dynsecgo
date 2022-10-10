@@ -130,33 +130,6 @@ func (ds *DynSec) GetClient(clientName string) (Client, error) {
 	return *client, nil
 }
 
-// ModifyClient
-func (ds *DynSec) ModifyClient(clientName string) error {
-	jsonCommand, err := ds.command.DeleteClient(clientName)
-	if err != nil {
-		return err
-	}
-
-	result, err := ds.sendCommand(jsonCommand)
-	if err != nil {
-		return err
-	}
-
-	var newResponse response
-
-	if err := json.Unmarshal(result, &newResponse); err != nil {
-		return err
-	}
-
-	if newResponse.Responses[0].Error != nil {
-		if *newResponse.Responses[0].Error == "Client not found" {
-			return fmt.Errorf(*newResponse.Responses[0].Error)
-		}
-	}
-
-	return nil
-}
-
 // DeleteClient
 func (ds *DynSec) DeleteClient(clientName string) error {
 	jsonCommand, err := ds.command.DeleteClient(clientName)

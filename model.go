@@ -1,5 +1,11 @@
 package dynsecgo
 
+import (
+	"time"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+)
+
 type Client struct {
 	UserName        string  `json:"username"`
 	Textname        string  `json:"textname,omitempty" example:"1"`
@@ -9,10 +15,19 @@ type Client struct {
 	Groups          []group `json:"groups,omitempty"`
 }
 
-type acl struct {
-	Acltype string `json:"acltype"`
-	Topic   string `json:"topic"`
-	Allow   bool   `json:"allow"`
+type DynSec struct {
+	mc          mqtt.Client
+	command     *dynSecCommand
+	always      bool
+	timeOut     time.Duration //Millisecond
+	subResponse chan []byte
+}
+
+type Acl struct {
+	Acltype  string `json:"acltype"`
+	Topic    string `json:"topic"`
+	Priority int    `json:"priority"`
+	Allow    bool   `json:"allow"`
 }
 
 type group struct {
@@ -55,7 +70,7 @@ type command struct {
 	Textdescription string  `json:"textdescription,omitempty"`
 	Verbose         bool    `json:"verbose,omitempty"`
 	Disabled        bool    `json:"disabled,omitempty"`
-	Acls            []acl   `json:"acls,omitempty"`
+	Acls            []Acl   `json:"acls,omitempty"`
 }
 
 type data struct {

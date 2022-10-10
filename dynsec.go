@@ -8,17 +8,37 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type DynSec struct {
-	mc          mqtt.Client
-	command     *dynSecCommand
-	always      bool
-	timeOut     time.Duration //Millisecond
-	subResponse chan []byte
+const (
+	charset = "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	dinSecPubTopic = "$CONTROL/dynamic-security/v1"
+	dinSecSubTopic = "$CONTROL/dynamic-security/v1/response/#"
+	////// acltypes
+	PubSend      = "publishClientSend"
+	PubReceive   = "publishClientReceive"
+	SubPattern   = "subscribePattern"
+	SubLiteral   = "subscribeLiteral"
+	UnsubPattern = "unsubscribePattern"
+	UnsubLiteral = "unsubscribeLiteral"
+)
+
+var AclType = struct {
+	PublishClientSend    string
+	PublishClientReceive string
+	SubscribeLiteral     string
+	SubscribePattern     string
+	UnsubscribeLiteral   string
+	UnsubscribePattern   string
+}{
+	PublishClientSend:    "publishClientSend",
+	PublishClientReceive: "publishClientReceive",
+	SubscribeLiteral:     "subscribeLiteral",
+	SubscribePattern:     "subscribePattern",
+	UnsubscribeLiteral:   "unsubscribeLiteral",
+	UnsubscribePattern:   "unsubscribePattern",
 }
 
-type dynSecCommand struct {
-}
-
+// NewDynSecCommand
 func NewDynSecCommand() *dynSecCommand {
 	return &dynSecCommand{}
 }
@@ -28,7 +48,8 @@ func (ds *DynSec) SetTimeout(timeout time.Duration) {
 	ds.timeOut = timeout
 }
 
-func NewDynSecInternalClient(user, password, clientID, host string, port int, runAlways bool) *DynSec {
+// NewDynSecClient
+func NewDynSecClient(user, password, clientID, host string, port int, runAlways bool) *DynSec {
 
 	if len(clientID) < 1 {
 		clientID = randString(8)
@@ -62,13 +83,6 @@ func NewDynSecInternalClient(user, password, clientID, host string, port int, ru
 		subResponse: make(chan []byte),
 	}
 }
-
-const (
-	charset = "abcdefghijklmnopqrstuvwxyz" +
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	dinSecPubTopic = "$CONTROL/dynamic-security/v1"
-	dinSecSubTopic = "$CONTROL/dynamic-security/v1/response/#"
-)
 
 // subscribe
 func (ds *DynSec) subscribe() error {
