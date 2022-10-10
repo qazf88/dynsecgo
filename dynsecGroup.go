@@ -24,12 +24,13 @@ func (ds *DynSec) ExistGroup(groupName string) (bool, error) {
 		return false, err
 	}
 
-	if *newResponse.Responses[0].Error == "Group already exists" {
-		return true, nil
-	} else if *newResponse.Responses[0].Error == "Group not found" {
-		return false, nil
+	if newResponse.Responses[0].Error != nil {
+		if *newResponse.Responses[0].Error == "Group already exists" {
+			return true, nil
+		} else if *newResponse.Responses[0].Error == "Group not found" {
+			return false, nil
+		}
 	}
-
 	return false, fmt.Errorf("undefinid error for response: %s", string(result))
 }
 
