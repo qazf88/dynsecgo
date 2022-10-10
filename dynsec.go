@@ -39,8 +39,8 @@ var AclType = struct {
 }
 
 // NewDynSecCommand
-func NewDynSecCommand() *dynSecCommand {
-	return &dynSecCommand{}
+func NewDynSecCommand() *DynSecCommand {
+	return &DynSecCommand{}
 }
 
 // SetTimeout Millisecond

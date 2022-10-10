@@ -5,11 +5,11 @@ import (
 	"fmt"
 )
 
-type dynSecCommand struct {
+type DynSecCommand struct {
 }
 
 // AddClient
-func (dsc *dynSecCommand) AddClient(clientName, password, clientID, textName, textdescription string, roleName []string, rolePriority []int, groupName []string, groupPriority []int) ([]byte, error) {
+func (dsc *DynSecCommand) AddClient(clientName, password, clientID, textName, textdescription string, roleName []string, rolePriority []int, groupName []string, groupPriority []int) ([]byte, error) {
 
 	newCommand := []command{{
 		Command:  "createClient",
@@ -50,7 +50,7 @@ func (dsc *dynSecCommand) AddClient(clientName, password, clientID, textName, te
 }
 
 // GetClient command
-func (dsc *dynSecCommand) GetClient(clientName string) ([]byte, error) {
+func (dsc *DynSecCommand) GetClient(clientName string) ([]byte, error) {
 
 	newCommand := &commands{Commands: []command{{
 		Command: "getClient", Username: clientName}}}
@@ -64,7 +64,7 @@ func (dsc *dynSecCommand) GetClient(clientName string) ([]byte, error) {
 }
 
 // DeleteClient command
-func (dsc *dynSecCommand) DeleteClient(clientName string) ([]byte, error) {
+func (dsc *DynSecCommand) DeleteClient(clientName string) ([]byte, error) {
 	newCommand := &commands{Commands: []command{{
 		Command: "deleteClient", Username: clientName}}}
 
@@ -77,7 +77,7 @@ func (dsc *dynSecCommand) DeleteClient(clientName string) ([]byte, error) {
 }
 
 // DisableClient
-func (dsc *dynSecCommand) DisableClient(clientName string) ([]byte, error) {
+func (dsc *DynSecCommand) DisableClient(clientName string) ([]byte, error) {
 	newCommand := &commands{Commands: []command{{
 		Command: "disableClient", Username: clientName}}}
 
@@ -90,7 +90,7 @@ func (dsc *dynSecCommand) DisableClient(clientName string) ([]byte, error) {
 }
 
 // EnableClient
-func (dsc *dynSecCommand) EnableClient(clientName string) ([]byte, error) {
+func (dsc *DynSecCommand) EnableClient(clientName string) ([]byte, error) {
 	newCommand := &commands{Commands: []command{{
 		Command: "enableClient", Username: clientName}}}
 
@@ -103,7 +103,7 @@ func (dsc *dynSecCommand) EnableClient(clientName string) ([]byte, error) {
 }
 
 // GetGroup
-func (dsc *dynSecCommand) GetGroup(groupName string) ([]byte, error) {
+func (dsc *DynSecCommand) GetGroup(groupName string) ([]byte, error) {
 	newCommand := &commands{Commands: []command{{
 		Command: "getGroup", Username: groupName}}}
 
@@ -116,7 +116,7 @@ func (dsc *dynSecCommand) GetGroup(groupName string) ([]byte, error) {
 }
 
 // AddGroup
-func (dsc *dynSecCommand) AddGroup(groupName string, roleName []string, rolePriority []int) ([]byte, error) {
+func (dsc *DynSecCommand) AddGroup(groupName string, roleName []string, rolePriority []int) ([]byte, error) {
 
 	newCommand := []command{{
 		Command:   "createGroup",
@@ -145,7 +145,7 @@ func (dsc *dynSecCommand) AddGroup(groupName string, roleName []string, rolePrio
 }
 
 // DeleteGroup command
-func (dsc *dynSecCommand) DeleteGroup(groupName string) ([]byte, error) {
+func (dsc *DynSecCommand) DeleteGroup(groupName string) ([]byte, error) {
 	newCommand := &commands{Commands: []command{{
 		Command: "deleteGroup", Groupname: groupName}}}
 
@@ -158,7 +158,7 @@ func (dsc *dynSecCommand) DeleteGroup(groupName string) ([]byte, error) {
 }
 
 // GetRole
-func (dsc *dynSecCommand) GetRole(roleName string) ([]byte, error) {
+func (dsc *DynSecCommand) GetRole(roleName string) ([]byte, error) {
 	newCommand := &commands{Commands: []command{{
 		Command: "getRole", Rolename: roleName}}}
 
@@ -171,7 +171,7 @@ func (dsc *dynSecCommand) GetRole(roleName string) ([]byte, error) {
 }
 
 // AddRole
-func (dsc *dynSecCommand) AddRole(roleName, textName, textdescription string, acls []Acl) ([]byte, error) {
+func (dsc *DynSecCommand) AddRole(roleName, textName, textdescription string, acls []Acl) ([]byte, error) {
 
 	_command := command{
 		Command:  "createRole",
@@ -200,7 +200,7 @@ func (dsc *dynSecCommand) AddRole(roleName, textName, textdescription string, ac
 }
 
 // Acls
-func (dsc *dynSecCommand) Acl(aclType, topic string, priority int, allow bool) Acl {
+func (dsc *DynSecCommand) Acl(aclType, topic string, priority int, allow bool) Acl {
 
 	newAcl := Acl{
 		Acltype:  aclType,

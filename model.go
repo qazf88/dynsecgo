@@ -17,7 +17,7 @@ type Client struct {
 
 type DynSec struct {
 	mc          mqtt.Client
-	command     *dynSecCommand
+	command     *DynSecCommand
 	always      bool
 	timeOut     time.Duration //Millisecond
 	subResponse chan []byte
