@@ -119,3 +119,28 @@ next:
 
 	return nil
 }
+
+// DeleteRole
+func (ds *DynSec) DeleteRole(roleName string) error {
+
+	jsonCommand, err := ds.command.DeleteRole(roleName)
+	if err != nil {
+		return err
+	}
+
+	result, err := ds.sendCommand(jsonCommand)
+	if err != nil {
+		return err
+	}
+
+	var newResponse response
+	if err := json.Unmarshal(result, &newResponse); err != nil {
+		return err
+	}
+
+	if newResponse.Responses[0].Error != nil {
+		return fmt.Errorf(*newResponse.Responses[0].Error)
+	}
+
+	return nil
+}

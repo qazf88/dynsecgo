@@ -199,6 +199,19 @@ func (dsc *DynSecCommand) AddRole(roleName, textName, textdescription string, ac
 	return json, nil
 }
 
+// DeleteRole command
+func (dsc *DynSecCommand) DeleteRole(roleName string) ([]byte, error) {
+	newCommand := &commands{Commands: []command{{
+		Command: "deleteRole", Rolename: roleName}}}
+
+	json, err := json.Marshal(newCommand)
+	if err != nil {
+		return nil, err
+	}
+
+	return json, nil
+}
+
 // Acls
 func (dsc *DynSecCommand) Acl(aclType, topic string, priority int, allow bool) Acl {
 
