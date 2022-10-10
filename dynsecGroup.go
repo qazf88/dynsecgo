@@ -27,7 +27,7 @@ func (ds *DynSec) ExistGroup(groupName string) (bool, error) {
 	if newResponse.Responses[0].Error != nil {
 		if *newResponse.Responses[0].Error == "Group already exists" {
 			return true, nil
-		} else if *newResponse.Responses[0].Error == "Group not found" {
+		} else if *newResponse.Responses[0].Error == "Invalid/missing groupname" {
 			return false, nil
 		}
 	}
